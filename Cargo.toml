@@ -1,0 +1,28 @@
+[package]
+name = "RustiCraft"
+version = "0.1.0"
+authors = ["Pedro Starling <pedrostarling2000@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+psp = "0.3.10"
+hashbrown = "0.14.5"
+spin = "0.9.8"
+
+[dependencies.lazy_static]
+version = "1.5.0"
+features = ["spin_no_std"] 
+
+[dependencies.nalgebra]
+version = "0.33.0"
+default-features = false
+features = [
+    "alloc",
+    "libm"
+]
+[dependencies.num-traits]
+version = "0.2.19"
+default-features = false
+features = [
+    "libm"
+]
