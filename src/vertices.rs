@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use crate::TEXTURES_POS;
 use crate::rand::{
     //perlin,
@@ -5,7 +6,8 @@ use crate::rand::{
 };
 use na::{
     Vector2,
-    Vector3
+    Vector3,
+    Vector6
 };
 
 use hashbrown::{
@@ -17,7 +19,7 @@ use psp::{
 use psp::sys::GeCommand::VertexType;
 #[repr(C, align(16))]
 pub struct Cube(
-    pub Align16<[(Vector2<f32>,Vector3<f32>);36]>
+    pub Align16<[(Vector6<f32>);36]>
 );
 impl Cube{
     pub fn cube_vertices(x:f32,y:f32,z:f32,n:f32, tx:TexCoords)->Cube{
@@ -38,64 +40,56 @@ impl Cube{
         let f2 = tx.0[3].0[2];
         let f3 = tx.0[3].0[3];
         Cube(Align16([
-            (Vector2::<f32>::new(top0.x, top0.y),Vector3::<f32>::new( x-n,y-n, z+n)),//0
-            (Vector2::<f32>::new(top1.x, top1.y),Vector3::<f32>::new( x-n,y+n, z+n)),//4
-            (Vector2::<f32>::new(top2.x, top2.y),Vector3::<f32>::new( x+n,y+n, z+n)),//5
-            (Vector2::<f32>::new(top0.x, top0.y),Vector3::<f32>::new( x-n,y-n, z+n)),//0
-            (Vector2::<f32>::new(top2.x, top2.y),Vector3::<f32>::new( x+n,y+n, z+n)),//5
-            (Vector2::<f32>::new(top3.x, top3.y),Vector3::<f32>::new( x+n,y-n, z+n)),//1//top
-            (Vector2::<f32>::new(bot0.x, bot0.y),Vector3::<f32>::new( x-n,y-n, z-n)),//3
-            (Vector2::<f32>::new(bot1.x, bot1.y),Vector3::<f32>::new( x+n,y-n, z-n)),//2
-            (Vector2::<f32>::new(bot2.x, bot2.y),Vector3::<f32>::new( x+n,y+n, z-n)),//6
-            (Vector2::<f32>::new(bot0.x, bot0.y),Vector3::<f32>::new( x-n,y-n, z-n)),//3
-            (Vector2::<f32>::new(bot2.x, bot2.y),Vector3::<f32>::new( x+n,y+n, z-n)),//6
-            (Vector2::<f32>::new(bot3.x, bot3.y),Vector3::<f32>::new( x-n,y+n, z-n)),//7//bottom
-            (Vector2::<f32>::new(s0.x, s0.y),Vector3::<f32>::new( x+n,y-n,z-n)),//0
-            (Vector2::<f32>::new(s1.x, s1.y),Vector3::<f32>::new( x+n,y-n,z+n)),//3
-            (Vector2::<f32>::new(s2.x, s2.y),Vector3::<f32>::new( x+n,y+n,z+n)),//7
-            (Vector2::<f32>::new(s0.x, s0.y),Vector3::<f32>::new( x+n,y-n,z-n)),//0
-            (Vector2::<f32>::new(s2.x, s2.y),Vector3::<f32>::new( x+n,y+n,z+n)),//7
-            (Vector2::<f32>::new(s3.x, s3.y),Vector3::<f32>::new( x+n,y+n,z-n)),//4//left
-            (Vector2::<f32>::new(s0.x, s0.y),Vector3::<f32>::new( x-n,y-n,z-n)),//0
-            (Vector2::<f32>::new(s1.x, s1.y),Vector3::<f32>::new( x-n,y+n,z-n)),//3
-            (Vector2::<f32>::new(s2.x, s2.y),Vector3::<f32>::new( x-n,y+n,z+n)),//7
-            (Vector2::<f32>::new(s0.x, s0.y),Vector3::<f32>::new( x-n,y-n,z-n)),//0
-            (Vector2::<f32>::new(s2.x, s2.y),Vector3::<f32>::new( x-n,y+n,z+n)),//7
-            (Vector2::<f32>::new(s3.x, s3.y),Vector3::<f32>::new( x-n,y-n,z+n)),//4//right
-            (Vector2::<f32>::new(f0.x, f0.y),Vector3::<f32>::new( x-n,y+n,z-n)),//0
-            (Vector2::<f32>::new(f1.x, f1.y),Vector3::<f32>::new( x+n,y+n,z-n)),//1
-            (Vector2::<f32>::new(f2.x, f2.y),Vector3::<f32>::new( x+n,y+n,z+n)),//2
-            (Vector2::<f32>::new(f0.x, f0.y),Vector3::<f32>::new( x-n,y+n,z-n)),//0
-            (Vector2::<f32>::new(f2.x, f2.y),Vector3::<f32>::new( x+n,y+n,z+n)),//2
-            (Vector2::<f32>::new(f3.x, f3.y),Vector3::<f32>::new( x-n,y+n,z+n)),//3//front
-            (Vector2::<f32>::new(s0.x, s0.y),Vector3::<f32>::new( x-n,y-n,z-n)),//4
-            (Vector2::<f32>::new(s1.x, s1.y),Vector3::<f32>::new( x-n,y-n,z+n)),//7
-            (Vector2::<f32>::new(s2.x, s2.y),Vector3::<f32>::new( x+n,y-n,z+n)),//6
-            (Vector2::<f32>::new(s0.x, s0.y),Vector3::<f32>::new( x-n,y-n,z-n)),//4
-            (Vector2::<f32>::new(s2.x, s2.y),Vector3::<f32>::new( x+n,y-n,z+n)),//6
-            (Vector2::<f32>::new(s3.x, s3.y),Vector3::<f32>::new( x+n,y-n,z-n)),//5//back
+            Vector6::<f32>::new(top0.x, top0.y, 0.0, x-n,y-n, z+n),//0
+            Vector6::<f32>::new(top1.x, top1.y, 0.0,x-n,y+n, z+n),//4
+            Vector6::<f32>::new(top2.x, top2.y, 0.0,x+n,y+n, z+n),//5
+            Vector6::<f32>::new(top0.x, top0.y, 0.0,x-n,y-n, z+n),//0
+            Vector6::<f32>::new(top2.x, top2.y, 0.0,x+n,y+n, z+n),//5
+            Vector6::<f32>::new(top3.x, top3.y, 0.0,x+n,y-n, z+n),//1//top
+            Vector6::<f32>::new(bot0.x, bot0.y, 0.0,x-n,y-n, z-n),//3
+            Vector6::<f32>::new(bot1.x, bot1.y, 0.0,x+n,y-n, z-n),//2
+            Vector6::<f32>::new(bot2.x, bot2.y, 0.0,x+n,y+n, z-n),//6
+            Vector6::<f32>::new(bot0.x, bot0.y, 0.0,x-n,y-n, z-n),//3
+            Vector6::<f32>::new(bot2.x, bot2.y, 0.0,x+n,y+n, z-n),//6
+            Vector6::<f32>::new(bot3.x, bot3.y, 0.0,x-n,y+n, z-n),//7//bottom
+            Vector6::<f32>::new(s0.x, s0.y, 0.0,x+n,y-n,z-n),//0
+            Vector6::<f32>::new(s1.x, s1.y, 0.0,x+n,y-n,z+n),//3
+            Vector6::<f32>::new(s2.x, s2.y, 0.0,x+n,y+n,z+n),//7
+            Vector6::<f32>::new(s0.x, s0.y, 0.0,x+n,y-n,z-n),//0
+            Vector6::<f32>::new(s2.x, s2.y, 0.0,x+n,y+n,z+n),//7
+            Vector6::<f32>::new(s3.x, s3.y, 0.0,x+n,y+n,z-n),//4//left
+            Vector6::<f32>::new(s0.x, s0.y, 0.0,x-n,y-n,z-n),//0
+            Vector6::<f32>::new(s1.x, s1.y, 0.0,x-n,y+n,z-n),//3
+            Vector6::<f32>::new(s2.x, s2.y, 0.0,x-n,y+n,z+n),//7
+            Vector6::<f32>::new(s0.x, s0.y, 0.0,x-n,y-n,z-n),//0
+            Vector6::<f32>::new(s2.x, s2.y, 0.0,x-n,y+n,z+n),//7
+            Vector6::<f32>::new(s3.x, s3.y, 0.0,x-n,y-n,z+n),//4//right
+            Vector6::<f32>::new(f0.x, f0.y, 0.0,x-n,y+n,z-n),//0
+            Vector6::<f32>::new(f1.x, f1.y, 0.0,x+n,y+n,z-n),//1
+            Vector6::<f32>::new(f2.x, f2.y, 0.0,x+n,y+n,z+n),//2
+            Vector6::<f32>::new(f0.x, f0.y, 0.0,x-n,y+n,z-n),//0
+            Vector6::<f32>::new(f2.x, f2.y, 0.0,x+n,y+n,z+n),//2
+            Vector6::<f32>::new(f3.x, f3.y, 0.0,x-n,y+n,z+n),//3//front
+            Vector6::<f32>::new(s0.x, s0.y, 0.0,x-n,y-n,z-n),//4
+            Vector6::<f32>::new(s1.x, s1.y, 0.0,x-n,y-n,z+n),//7
+            Vector6::<f32>::new(s2.x, s2.y, 0.0,x+n,y-n,z+n),//6
+            Vector6::<f32>::new(s0.x, s0.y, 0.0,x-n,y-n,z-n),//4
+            Vector6::<f32>::new(s2.x, s2.y, 0.0,x+n,y-n,z+n),//6
+            Vector6::<f32>::new(s3.x, s3.y, 0.0,x+n,y-n,z-n),//5//back
         ]))
     }
-}
-union Transmute<T: Copy, U: Copy> {
-    from: T,
-    to: U,
 }
 #[derive(Copy, Clone)]
 pub struct TexCoord(
     pub [Vector2<f32>;4]
 );
 impl TexCoord{
-    pub const fn tex_coord(xy:Vector2<f32>)->TexCoord{
-        let xy_t = unsafe {
-            Transmute::<Vector2::<f32>, (f32,f32)> { from:xy }.to 
-        };
-        let dxy = (xy_t.0, xy_t.1);
+    pub const fn tex_coord(xy:(f32,f32))->TexCoord{
         TexCoord([
-            Vector2::<f32>::new(dxy.0,dxy.1),
-            Vector2::<f32>::new(dxy.0 + 1.0, dxy.1),
-            Vector2::<f32>::new(dxy.0 + 1.0, dxy.1 + 1.0),
-            Vector2::<f32>::new(dxy.0, dxy.1 + 1.0)
+            Vector2::<f32>::new(xy.0,xy.1),
+            Vector2::<f32>::new(xy.0 + 1.0, xy.0),
+            Vector2::<f32>::new(xy.0 + 1.0, xy.1 + 1.0),
+            Vector2::<f32>::new(xy.0, xy.1 + 1.0)
         ])
     }
 }
@@ -112,7 +106,7 @@ pub struct TexCoords(
     pub [TexCoord;4]
 );
 impl TexCoords{
-    pub const fn tex_coords(top:Vector2<f32>,bottom:Vector2<f32>,side:Vector2<f32>,front:Vector2<f32>)->TexCoords{
+    pub const fn tex_coords(top:(f32, f32), bottom:(f32,f32),side:(f32,f32),front:(f32,f32))->TexCoords{
         TexCoords([
             TexCoord::tex_coord(top),
             TexCoord::tex_coord(bottom),
@@ -175,16 +169,18 @@ impl World{
     }
     pub fn render(&mut self, p:Vector3<f32>){
         let current_chunk = self.get_current_chunk(p);
+        let mut chunk:Vec<Cube> = Vec::new();
         for (x_pos,x) in current_chunk.data.iter().enumerate(){
             for (y_pos,y )in x.iter().enumerate(){
                 for (z_pos,z )in y.iter().enumerate(){
                     if let Some(tx) = TEXTURES_POS[*z as usize]{
-                        let cube = Cube::cube_vertices(p.x+ x_pos as f32, p.y+ y_pos as f32, p.z+ z_pos as f32, 0.5, tx);
-                        draw_chunk(&cube.0.0);
+                        let cube = Cube::cube_vertices(p.x+ x_pos as f32, p.y+ y_pos as f32, p.z+ z_pos as f32, 1.0f32, tx);
+                        draw_chunk(&cube.0);
                     }
                 }
             }
         }
+
     }
     pub fn process(&mut self, p:Vector3<f32>){
         self.update_chunks(p);
@@ -193,7 +189,7 @@ impl World{
         self.render(p);
     }
 }
-pub fn draw_chunk(c:&[(Vector2<f32>,Vector3<f32>)]){
+pub fn draw_chunk(c:&Align16<[Vector6<f32>;36]>){
     use psp::sys::{
         self,
         GuPrimitive, 
@@ -203,10 +199,10 @@ pub fn draw_chunk(c:&[(Vector2<f32>,Vector3<f32>)]){
     unsafe{
         sys::sceGumDrawArray(
             GuPrimitive::Triangles,
-            VertexType::TEXTURE_32BITF | VertexType::VERTEX_32BITF,
-            c.len() as i32,
+            VertexType::TEXTURE_32BITF | VertexType::COLOR_8888 | VertexType::VERTEX_32BITF | VertexType::TRANSFORM_3D,
+            36,
             ptr::null_mut(),
-            c as *const [(Vector2<f32>,Vector3<f32>)] as  *const _,
+            c as *const Align16<[Vector6<f32>;36]> as  *const _,
         );
     }
 }

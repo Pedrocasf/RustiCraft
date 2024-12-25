@@ -2,7 +2,6 @@
 #![no_main]
 #![feature(const_fn_floating_point_arithmetic)]
 #![feature(panic_internals)]
-#![feature(effects)]
 #![feature(const_trait_impl)]
 #![feature(rustc_private)]
 extern crate lazy_static; 
@@ -40,7 +39,7 @@ const IMAGE_SIZE: usize = 256;
 // The image data *must* be aligned to a 16 byte boundary.
 const TEXTURE: Align16<[u8; IMAGE_SIZE * IMAGE_SIZE * 4]> = Align16(*include_bytes!("../textures/eldpack/terrain.raw.swizzled"));
 
-static mut LIST: Align16<[u32; 0x100000]> = Align16([0; 0x100000]);
+static mut LIST: Align16<[u32; 0x40000]> = Align16([0; 0x40000]);
 const ROT_SPEED:f32 = 1.0 * (3.14/180.0);
 const WALK_SPEED:f32 = 0.5;
 fn psp_main() {
@@ -66,7 +65,7 @@ unsafe fn psp_main_inner() {
 
     sys::sceGuInit();
 
-    sys::sceGuStart(GuContextType::Direct, &mut LIST.0 as *mut [u32; 0x100000] as *mut _);
+    sys::sceGuStart(GuContextType::Direct, &mut LIST.0 as *mut [u32; 0x40000] as *mut _);
     sys::sceGuDrawBuffer(DisplayPixelFormat::Psm8888, fbp0.as_mut_ptr_from_zero() as _, BUF_WIDTH as i32);
     sys::sceGuDispBuffer(SCREEN_WIDTH as i32, SCREEN_HEIGHT as i32, fbp1.as_mut_ptr_from_zero() as _, BUF_WIDTH as i32);
     sys::sceGuDepthBuffer(zbp.as_mut_ptr_from_zero() as _, BUF_WIDTH as i32);
@@ -95,20 +94,23 @@ unsafe fn psp_main_inner() {
     let mut vertical_a:f32 = 0.0;
     sys::sceGuDisplay(true);
     loop {
-        sys::sceGuStart(GuContextType::Direct, &mut LIST.0 as *mut [u32; 0x100000] as *mut _);
+        sys::sceGuStart(GuContextType::Direct, &mut LIST.0 as *mut [u32; 0x40000] as *mut _);
 
         // clear screen
         sys::sceGuClearColor(0xff554433);
         sys::sceGuClearDepth(0);
-        sys::sceGuClear(ClearBuffer::COLOR_BUFFER_BIT | ClearBuffer::DEPTH_BUFFER_BIT);
+        sys::sceGuClear(ClearBuffer::FAST_CLEAR_BIT | ClearBuffer::COLOR_BUFFER_BIT | ClearBuffer::DEPTH_BUFFER_BIT);
 
         // setup matrices for cube
 
         sys::sceGumMatrixMode(sys::MatrixMode::Projection);
         sys::sceGumLoadIdentity();
-        sys::sceGumPerspective(75.0, 16.0 / 9.0, 0.0, 1000.0);
-
-        {    
+        sys::sceGumPerspective(75.0, 16.0 / 9.0, 0.5, 1000.0);
+        sys::sceGumMatrixMode(sys::MatrixMode::View);
+        sys::sceGumLoadIdentity();
+        {
+            sys::sceGumMatrixMode(sys::MatrixMode::Model);
+            sys::sceGumLoadIdentity();
             if pad_data.buttons.contains(CtrlButtons::CIRCLE){
                 horizontal_a -= ROT_SPEED;
             }
@@ -154,18 +156,16 @@ unsafe fn psp_main_inner() {
             let up = ScePspFVector3{x:up.x,y:up.y,z:up.z};
             let center = ScePspFVector3{x:pmd.x,y:pmd.y,z:pmd.z};
             let pos = ScePspFVector3{x:position.x,y:position.y,z:position.z};
-            sys::sceGumMatrixMode(sys::MatrixMode::View);
-            sys::sceGumLoadIdentity();
+
             sys::sceGumLookAt(&pos, &center, &up);
             sys::sceGumRotateXYZ(&ScePspFVector3{x:vertical_a,y:-horizontal_a,z:0.0});
-            sys::sceGumUpdateMatrix();
+            //sys::sceGumUpdateMatrix();
         }
        
-        sys::sceGumMatrixMode(sys::MatrixMode::Model);
-        sys::sceGumLoadIdentity();
+
         // setup texture
 
-        sys::sceGuTexMode(TexturePixelFormat::Psm8888, 0, 0, 1);
+        sys::sceGuTexMode(TexturePixelFormat::Psm8888, 0, 0, 0);
         sys::sceGuTexImage(MipmapLevel::None, IMAGE_SIZE as i32, IMAGE_SIZE as i32, IMAGE_SIZE as i32, texture.as_mut_ptr_direct_to_vram() as *const _);
         sys::sceGuTexFunc(TextureEffect::Replace, TextureColorComponent::Rgb);
         sys::sceGuTexFilter(TextureFilter::Nearest, TextureFilter::Nearest);
